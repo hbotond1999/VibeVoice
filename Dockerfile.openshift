@@ -1,0 +1,45 @@
+# Multi-stage Dockerfile for OpenShift deployment with readonly filesystem
+# All dependencies installed at build time
+
+FROM vllm/vllm-openai:latest
+
+# Install system dependencies at build time
+USER root
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    ffmpeg \
+    libsndfile1 \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Copy application code
+COPY . /app
+WORKDIR /app
+
+# Install VibeVoice with vLLM support at build time
+RUN pip install --no-cache-dir -e "/app[vllm]" && \
+    pip cache purge
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTORCH_ALLOC_CONF=expandable_segments:True \
+    VIBEVOICE_FFMPEG_MAX_CONCURRENCY=64 \
+    HOME=/app \
+    HUGGINGFACE_HUB_CACHE=/mnt/models-data \
+    HF_MODULES_CACHE=/tmp/huggingface/modules \
+    XDG_CACHE_HOME=/app/.cache \
+    TMPDIR=/tmp
+
+# Prepare directories and permissions for OpenShift arbitrary UID
+# OpenShift assigns random UID in group 0, so we set group permissions
+RUN mkdir -p /app/.cache /tmp/huggingface/modules /mnt/models-data && \
+    chmod -R g=u /app && \
+    chmod -R g+rwX /app /tmp /mnt/models-data
+
+# Expose default port
+EXPOSE 3000
+
+# Use the OpenShift-compatible startup script
+# No explicit USER directive - OpenShift assigns random UID
+ENTRYPOINT ["python3", "/app/vllm_plugin/scripts/start_server_openshift.py"]

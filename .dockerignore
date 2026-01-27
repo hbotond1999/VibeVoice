@@ -1,0 +1,89 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info
+dist/
+build/
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation (opcionális - ha nem kell a containerben)
+docs/
+*.md
+!README.md
+
+# Demo files (nagy méretű fájlok, nem kellenek production-ben)
+demo/voices/
+demo/*.wav
+demo/*.mp3
+demo/*.flac
+demo/text_examples/
+
+# Figures/Images (nem kellenek runtime-ban)
+Figures/
+
+# Build artifacts
+*.log
+*.tmp
+tmp/
+temp/
+
+# Docker
+Dockerfile
+Dockerfile.*
+.dockerignore
+docker-compose.yml
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Build scripts (már benne vannak a repo-ban, nem kell container-ben)
+build-and-push.bat
+build-and-push.sh
+
+# Jupyter notebooks
+*.ipynb
+.ipynb_checkpoints/
+
+# Training/finetuning data (ha van)
+finetuning-asr/toy_dataset/
+
+# Security
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+
+# OS
+Thumbs.db
