@@ -90,13 +90,19 @@ def generate_tokenizer(model_path: str) -> None:
     )
 
 
-def start_vllm_server(model_path: str, port: int, allowed_media_path: str) -> None:
+def start_vllm_server(model_path: str, port: int, allowed_media_path: str,
+                      max_num_seqs: int, max_model_len: int, 
+                      max_num_batched_tokens: int, gpu_memory_utilization: float) -> None:
     """Start vLLM server (replaces current process)."""
     print(f"\n{'='*60}")
     print(f"  Starting vLLM server")
     print(f"  Model: {model_path}")
     print(f"  Port: {port}")
     print(f"  Media path: {allowed_media_path}")
+    print(f"  Max num seqs: {max_num_seqs}")
+    print(f"  Max model len: {max_model_len}")
+    print(f"  Max num batched tokens: {max_num_batched_tokens}")
+    print(f"  GPU memory utilization: {gpu_memory_utilization}")
     print(f"{'='*60}\n")
     
     vllm_cmd = [
@@ -104,11 +110,11 @@ def start_vllm_server(model_path: str, port: int, allowed_media_path: str) -> No
         "--served-model-name", "vibevoice",
         "--trust-remote-code",
         "--dtype", "bfloat16",
-        "--max-num-seqs", "64",
-        "--max-model-len", "65536",
-        "--max-num-batched-tokens", "32768",
-        "--gpu-memory-utilization", "0.8",
-        "--enforce-eager",
+        "--max-num-seqs", str(max_num_seqs),
+        "--max-model-len", str(max_model_len),
+        "--max-num-batched-tokens", str(max_num_batched_tokens),
+        "--gpu-memory-utilization", str(gpu_memory_utilization),
+        # "--enforce-eager",
         "--no-enable-prefix-caching",
         "--enable-chunked-prefill",
         "--chat-template-content-format", "openai",
@@ -166,6 +172,30 @@ Examples:
         default="/app",
         help="Allowed local media path for audio files (default: /app)"
     )
+    parser.add_argument(
+        "--max-num-seqs",
+        type=int,
+        default=64,
+        help="Maximum number of sequences (default: 64)"
+    )
+    parser.add_argument(
+        "--max-model-len",
+        type=int,
+        default=32768,
+        help="Maximum model length (default: 32768)"
+    )
+    parser.add_argument(
+        "--max-num-batched-tokens",
+        type=int,
+        default=65536,
+        help="Maximum number of batched tokens (default: 65536)"
+    )
+    parser.add_argument(
+        "--gpu-memory-utilization",
+        type=float,
+        default=0.9,
+        help="GPU memory utilization (default: 0.9)"
+    )
     args = parser.parse_args()
 
     print("\n" + "="*60)
@@ -195,7 +225,15 @@ Examples:
         generate_tokenizer(model_path)
 
     # Step 4: Start vLLM server
-    start_vllm_server(model_path, args.port, args.allowed_media_path)
+    start_vllm_server(
+        model_path, 
+        args.port, 
+        args.allowed_media_path,
+        args.max_num_seqs,
+        args.max_model_len,
+        args.max_num_batched_tokens,
+        args.gpu_memory_utilization
+    )
 
 
 if __name__ == "__main__":

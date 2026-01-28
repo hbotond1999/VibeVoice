@@ -8,8 +8,8 @@ echo   VibeVoice vLLM ASR - Docker Build and Push
 echo ============================================================
 echo.
 
-set IMAGE_NAME=image
-set IMAGE_TAG=v2
+set IMAGE_NAME=docker-releases.barre.hu/iqcc/vllm-vibevoice-asr
+set IMAGE_TAG=v0.12.0
 set FULL_IMAGE=%IMAGE_NAME%:%IMAGE_TAG%
 
 echo Building Docker image...
@@ -19,12 +19,12 @@ echo.
 docker build -f Dockerfile.openshift -t %FULL_IMAGE% .
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo ❌ Build failed!
+    echo Build failed!
     exit /b %ERRORLEVEL%
 )
 
 echo.
-echo ✅ Build successful!
+echo Build successful!
 echo.
 echo Pushing image to registry...
 echo.
@@ -32,13 +32,13 @@ echo.
 docker push %FULL_IMAGE%
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo ❌ Push failed!
+    echo Push failed!
     exit /b %ERRORLEVEL%
 )
 
 echo.
 echo ============================================================
-echo   ✅ Successfully built and pushed!
+echo   Successfully built and pushed!
 echo   Image: %FULL_IMAGE%
 echo ============================================================
 echo.
