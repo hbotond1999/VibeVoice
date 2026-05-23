@@ -9,7 +9,7 @@ echo ============================================================
 echo.
 
 set IMAGE_NAME=docker-releases.barre.hu/iqcc/vllm-vibevoice-asr
-set IMAGE_TAG=v0.12.0
+set IMAGE_TAG=v5
 set FULL_IMAGE=%IMAGE_NAME%:%IMAGE_TAG%
 
 echo Building Docker image...
