@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for OpenShift deployment with readonly filesystem
 # All dependencies installed at build time
 
-FROM vllm/vllm-openai:v0.14.1
+FROM vllm/vllm-openai:v0.12.0
 
 # Install system dependencies at build time
 USER root

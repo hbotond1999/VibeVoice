@@ -606,15 +606,10 @@ class VibeVoiceDummyInputsBuilder(BaseDummyInputsBuilder[VibeVoiceProcessingInfo
     """
     
     def _get_max_audio_samples(self, seq_len: int) -> int:
-        """Compute audio samples for the profiling dummy input.
-
-        The theoretical maximum (seq_len * compress_ratio) can exceed 50 M samples
-        (~36 min at 24 kHz with seq_len=16384), which exhausts GPU activation
-        memory during vLLM's profile_run while the model weights are already
-        loaded.  We cap the profiling audio at VIBEVOICE_PROFILE_AUDIO_SECS
-        seconds (default 30 s) so the dummy forward pass fits in memory.  This
-        does not affect real inference; it only determines how much encoder
-        memory vLLM reserves in the KV-cache budget.
+        """Compute maximum audio samples consistent with ``get_mm_max_tokens_per_item``.
+        
+        Uses the same formula: max_tokens = min(ceil(61min * sr / ratio) + 3, seq_len),
+        then converts back to samples.
         """
         hf_config = self.info.get_hf_config()
 
@@ -626,13 +621,12 @@ class VibeVoiceDummyInputsBuilder(BaseDummyInputsBuilder[VibeVoiceProcessingInfo
         compress_ratio = int(_cfg("speech_tok_compress_ratio", 3200))
         sample_rate = int(_cfg("target_sample_rate", 24000))
 
-        # Cap profiling audio to avoid GPU OOM during vLLM's profile_run.
-        # Override with VIBEVOICE_PROFILE_AUDIO_SECS env var if needed.
-        profile_secs = float(os.environ.get("VIBEVOICE_PROFILE_AUDIO_SECS", "30"))
-        max_profile_samples = int(profile_secs * sample_rate)
-
-        # Also respect the model context window as an upper bound.
-        max_tokens = min(seq_len, int(np.ceil(max_profile_samples / compress_ratio)) + 3)
+        # Upper bound: 61-minute audio at 24 kHz
+        max_hour_samples = 61 * 60 * sample_rate  # 88,464,000
+        max_tokens_from_audio = int(np.ceil(max_hour_samples / compress_ratio)) + 3
+        # Cannot exceed model context window
+        max_tokens = min(max_tokens_from_audio, seq_len)
+        # Convert tokens back to samples
         return max_tokens * compress_ratio
 
     def get_dummy_text(self, mm_counts: Mapping[str, int]) -> str:
