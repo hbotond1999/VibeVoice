@@ -91,8 +91,9 @@ def generate_tokenizer(model_path: str) -> None:
 
 
 def start_vllm_server(model_path: str, port: int, allowed_media_path: str,
-                      max_num_seqs: int, max_model_len: int, 
-                      max_num_batched_tokens: int, gpu_memory_utilization: float) -> None:
+                      max_num_seqs: int, max_model_len: int,
+                      max_num_batched_tokens: int, gpu_memory_utilization: float,
+                      tensor_parallel_size: int = 1) -> None:
     """Start vLLM server (replaces current process)."""
     print(f"\n{'='*60}")
     print(f"  Starting vLLM server")
@@ -103,6 +104,7 @@ def start_vllm_server(model_path: str, port: int, allowed_media_path: str,
     print(f"  Max model len: {max_model_len}")
     print(f"  Max num batched tokens: {max_num_batched_tokens}")
     print(f"  GPU memory utilization: {gpu_memory_utilization}")
+    print(f"  Tensor parallel size: {tensor_parallel_size}")
     print(f"{'='*60}\n")
     
     vllm_cmd = [
@@ -118,7 +120,7 @@ def start_vllm_server(model_path: str, port: int, allowed_media_path: str,
         "--no-enable-prefix-caching",
         "--enable-chunked-prefill",
         "--chat-template-content-format", "openai",
-        "--tensor-parallel-size", "1",
+        "--tensor-parallel-size", str(tensor_parallel_size),
         "--allowed-local-media-path", allowed_media_path,
         "--port", str(port),
         "--host", "0.0.0.0",  # Listen on all interfaces for OpenShift
@@ -145,6 +147,9 @@ Examples:
 
     # Skip tokenizer generation (already exists)
     python3 start_server_openshift.py --skip-tokenizer
+
+    # Split model across 2 GPUs
+    python3 start_server_openshift.py --tp 2
         """
     )
     parser.add_argument(
@@ -196,6 +201,13 @@ Examples:
         default=0.9,
         help="GPU memory utilization (default: 0.9)"
     )
+    parser.add_argument(
+        "--tp", "--tensor-parallel-size",
+        type=int,
+        default=1,
+        dest="tensor_parallel_size",
+        help="Tensor parallel size: split one model across N GPUs (default: 1)"
+    )
     args = parser.parse_args()
 
     print("\n" + "="*60)
@@ -232,7 +244,8 @@ Examples:
         args.max_num_seqs,
         args.max_model_len,
         args.max_num_batched_tokens,
-        args.gpu_memory_utilization
+        args.gpu_memory_utilization,
+        args.tensor_parallel_size,
     )
 
 
